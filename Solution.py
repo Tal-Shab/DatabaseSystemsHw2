@@ -118,8 +118,21 @@ def clearTables():
 
 
 def dropTables():
-    # TODO: implement
-    pass
+    # TODO: just did it to check git - need to check if this is correct
+    conn = None
+    try:
+        conn = Connector.DBConnector()
+        conn.execute("DROP TABLE Actors CASCADE;\
+                    DROP TABLE Movies CASCADE;\
+                    DROP TABLE Critics CASCADE;\
+                    DROP TABLE Studios CASCADE;\
+                    ")
+    except DatabaseException.ConnectionInvalid as e:
+        print(e)
+        # i think only this is relevant
+    finally:
+        # will happen any way after try termination or exception handling
+        conn.close()
 
 
 def addCritic(critic: Critic) -> ReturnValue:

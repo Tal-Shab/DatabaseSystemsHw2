@@ -14,7 +14,6 @@ from Business.Actor import Actor
 # ---------------------------------- CRUD API: ----------------------------------
 
 def createTables():
-    # TODO: see what exceptions are needed
     conn = None
     try:
         conn = Connector.DBConnector()
@@ -29,10 +28,10 @@ def createTables():
                     genre TEXT NOT NULL CHECK(genre in ('Drama','Action','Comedy','Horror')),\
                     PRIMARY KEY(movie_name,year)\
                     );\
-                    CREATE TABLE Studios(studio_id INTEGER PRIMARY KEY,\
+                    CREATE TABLE Studios(studio_id INTEGER PRIMARY KEY CHECK (studio_id>0),\
                     studio_name TEXT NOT NULL\
                     );\
-                    CREATE TABLE Critics(critic_id INTEGER PRIMARY KEY,\
+                    CREATE TABLE Critics(critic_id INTEGER PRIMARY KEY CHECK (critic_id>0),\
                     critic_name TEXT NOT NULL\
                     );\
                     ---------------relations---------------- \
@@ -41,8 +40,16 @@ def createTables():
                     year INTEGER NOT NULL,\
                     salary INTEGER NOT NULL CHECK (salary>0),\
                     num_roles INTEGER NOT NULL CHECK (num_roles>0),\
-                    PRIMARY KEY (actor_id,movie_name,year)\
-                    FOREIGN KEY (movie_name,year) REFERENCES Movies ON DELETE CASCADE\
+                    PRIMARY KEY (actor_id,movie_name,year),\
+                    FOREIGN KEY (movie_name,year) REFERENCES Movies ON DELETE CASCADE,\
+                    FOREIGN KEY (actor_id) REFERENCES Actors ON DELETE CASCADE\
+                    );\
+                    CREATE TABLE PlayedInRole(actor_id INTEGER NOT NULL,\
+                    movie_name TEXT NOT NULL,\
+                    year INTEGER NOT NULL,\
+                    actor_role TEXT NOT NULL,\
+                    PRIMARY KEY (actor_id,movie_name,year,actor_role),\
+                    FOREIGN KEY (movie_name,year) REFERENCES Movies ON DELETE CASCADE,\
                     FOREIGN KEY (actor_id) REFERENCES Actors ON DELETE CASCADE\
                     );\
                     CREATE TABLE Produced(movie_name TEXT NOT NULL,\
@@ -61,7 +68,7 @@ def createTables():
                     PRIMARY KEY(movie_name,year,critic_id),\
                     FOREIGN KEY(movie_name,year) REFERENCES Movies ON DELETE CASCADE,\
                     FOREIGN KEY(critic_id) REFERENCES Critics ON DELETE CASCADE\
-                    );\
+                    ); \
                     ---------------views---------------- \
                     CREATE VIEW movie_AVG_rating AS\
                     SELECT movie_name,year,AVG(rating) average\
@@ -73,15 +80,6 @@ def createTables():
                     FROM PlayedIn p RIGHT JOIN movie_AVG_rating r ON p.movie_name=r.movie_name and p.year=r.year\
                     ")
     except DatabaseException.ConnectionInvalid as e:
-        print(e)
-        # i think only this is relevant
-    except DatabaseException.NOT_NULL_VIOLATION as e:
-        print(e)
-    except DatabaseException.CHECK_VIOLATION as e:
-        print(e)
-    except DatabaseException.UNIQUE_VIOLATION as e:
-        print(e)
-    except DatabaseException.FOREIGN_KEY_VIOLATION as e:
         print(e)
     except Exception as e:
         print(e)
@@ -101,15 +99,6 @@ def clearTables():
                     ")
     except DatabaseException.ConnectionInvalid as e:
         print(e)
-        # i think only this is relevant
-    except DatabaseException.NOT_NULL_VIOLATION as e:
-        print(e)
-    except DatabaseException.CHECK_VIOLATION as e:
-        print(e)
-    except DatabaseException.UNIQUE_VIOLATION as e:
-        print(e)
-    except DatabaseException.FOREIGN_KEY_VIOLATION as e:
-        print(e)
     except Exception as e:
         print(e)
     finally:
@@ -126,10 +115,13 @@ def dropTables():
                     DROP TABLE Movies CASCADE;\
                     DROP TABLE Critics CASCADE;\
                     DROP TABLE Studios CASCADE;\
+                    DROP TABLE playedin CASCADE;\
+                    DROP TABLE playedinrole CASCADE;\
+                    DROP TABLE produced CASCADE;\
+                    DROP TABLE rated CASCADE;\
                     ")
     except DatabaseException.ConnectionInvalid as e:
         print(e)
-        # i think only this is relevant
     finally:
         # will happen any way after try termination or exception handling
         conn.close()

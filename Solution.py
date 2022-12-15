@@ -183,6 +183,7 @@ def addCritic(critic: Critic) -> ReturnValue:
         print(e)
         res = ReturnValue.ERROR
     except Exception as e:
+        res = ReturnValue.ERROR
         print(e)
     finally:
         conn.close()
@@ -202,6 +203,7 @@ def deleteCritic(critic_id: int) -> ReturnValue:
         print(e)
         res = ReturnValue.ERROR
     except Exception as e:
+        res = ReturnValue.ERROR
         print(e)
     finally:
         conn.close()
@@ -292,6 +294,7 @@ def criticRatedMovie(movieName: str, movieYear: int, criticID: int, rating: int)
         print(e)
         res = ReturnValue.ERROR
     except Exception as e:
+        res = ReturnValue.ERROR
         print(e)
     finally:
         conn.close()
@@ -313,6 +316,7 @@ def criticDidntRateMovie(movieName: str, movieYear: int, criticID: int) -> Retur
         print(e)
         res = ReturnValue.ERROR
     except Exception as e:
+        res = ReturnValue.ERROR
         print(e)
     finally:
         conn.close()
@@ -350,6 +354,7 @@ def actorPlayedInMovie(movieName: str, movieYear: int, actorID: int, salary: int
         print(e)
         res = ReturnValue.ERROR
     except Exception as e:
+        res = ReturnValue.ERROR
         print(e)
     finally:
         conn.close()
@@ -370,6 +375,7 @@ def actorDidntPlayeInMovie(movieName: str, movieYear: int, actorID: int) -> Retu
         print(e)
         res = ReturnValue.ERROR
     except Exception as e:
+        res = ReturnValue.ERROR
         print(e)
     finally:
         conn.close()
@@ -377,8 +383,35 @@ def actorDidntPlayeInMovie(movieName: str, movieYear: int, actorID: int) -> Retu
 
 
 def studioProducedMovie(studioID: int, movieName: str, movieYear: int, budget: int, revenue: int) -> ReturnValue:
-    # TODO: implement
-    pass
+    conn = None
+    res = ReturnValue.OK
+    try:
+        conn = Connector.DBConnector()
+        query = sql.SQL("INSERT INTO Produced(movie_name,year,studio_id,budget,revenue) VALUES({name},{year},{id},{bud},{rev})").format(
+            name=sql.Literal(movieName), year=sql.Literal(movieYear), id=sql.Literal(studioID),
+            bud=sql.Literal(budget), rev=sql.Literal(revenue))
+        conn.execute(query)
+    except DatabaseException.CHECK_VIOLATION as e:
+        print(e)
+        res = ReturnValue.BAD_PARAMS
+    except DatabaseException.NOT_NULL_VIOLATION as e:
+        print(e)
+        res = ReturnValue.BAD_PARAMS
+    except DatabaseException.UNIQUE_VIOLATION as e:
+        print(e)
+        res = ReturnValue.ALREADY_EXISTS
+    except DatabaseException.FOREIGN_KEY_VIOLATION as e:
+        print(e)
+        res = ReturnValue.NOT_EXISTS
+    except DatabaseException.ConnectionInvalid as e:
+        print(e)
+        res = ReturnValue.ERROR
+    except Exception as e:
+        res = ReturnValue.ERROR
+        print(e)
+    finally:
+        conn.close()
+        return res
 
 
 def studioDidntProduceMovie(studioID: int, movieName: str, movieYear: int) -> ReturnValue:

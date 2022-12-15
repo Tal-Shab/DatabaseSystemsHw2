@@ -110,8 +110,8 @@ def createTables():
                     GROUP BY movie_name,year\
                     ;\
                     CREATE VIEW actor_movie_AVG_rating AS\
-                    SELECT DISTINCT actor_id, r.movie_name, r.year, average\
-                    FROM PlayedIn p RIGHT JOIN movie_AVG_rating r ON p.movie_name=r.movie_name and p.year=r.year\
+                    SELECT DISTINCT actor_id, p.movie_name, p.year, COALESCE(average,0) as average\
+                    FROM PlayedIn p LEFT JOIN movie_AVG_rating r ON p.movie_name=r.movie_name and p.year=r.year\
                     ")
     except DatabaseException.ConnectionInvalid as e:
         print(e)
@@ -415,35 +415,135 @@ def studioProducedMovie(studioID: int, movieName: str, movieYear: int, budget: i
 
 
 def studioDidntProduceMovie(studioID: int, movieName: str, movieYear: int) -> ReturnValue:
-    # TODO: implement
-    pass
+    conn = None
+    res = ReturnValue.OK
+    try:
+        conn = Connector.DBConnector()
+        query = sql.SQL("DELETE FROM Produced WHERE movie_name={name} AND year={y} AND studio_id={id}").format(
+            name=sql.Literal(movieName), y=sql.Literal(movieYear), id=sql.Literal(studioID))
+        rows_effected, _ = conn.execute(query)
+        if rows_effected == 0:
+            res = ReturnValue.NOT_EXISTS
+    except DatabaseException.ConnectionInvalid as e:
+        print(e)
+        res = ReturnValue.ERROR
+    except Exception as e:
+        res = ReturnValue.ERROR
+        print(e)
+    finally:
+        conn.close()
+        return res
 
 
-# ---------------------------------- BASIC API: ----------------------------------
 def averageRating(movieName: str, movieYear: int) -> float:
-    # TODO: implement
-    pass
-
+    conn = None
+    res = float(0)
+    try:
+        conn = Connector.DBConnector()
+        query = sql.SQL("SELECT average FROM movie_avg_rating where movie_name={name} And year={y}").format(
+            name=sql.Literal(movieName), y=sql.Literal(movieYear))
+        _, result = conn.execute(query)
+        if len(result.rows) > 0:
+            res = result.rows[0][0]
+    except DatabaseException.ConnectionInvalid as e:
+        print(e)
+    except Exception as e:
+        print(e)
+    finally:
+        conn.close()
+        return res
 
 def averageActorRating(actorID: int) -> float:
-    # TODO: implement
-    pass
+    conn = None
+    res = float(0)
+    try:
+        conn = Connector.DBConnector()
+        query = sql.SQL("SELECT AVG(average) FROM actor_movie_avg_rating where actor_id={id}").format(
+            id=sql.Literal(actorID))
+        _, result = conn.execute(query)
+        if len(result.rows) > 0:
+            res = result.rows[0][0]
+    except DatabaseException.ConnectionInvalid as e:
+        print(e)
+    except Exception as e:
+        print(e)
+    finally:
+        conn.close()
+        return res
 
 
 def bestPerformance(actor_id: int) -> Movie:
-    # TODO: implement
-    pass
+    conn = None
+    try:
+        conn = Connector.DBConnector()
+        query = sql.SQL("SELECT ac.movie_name, ac.year , mo.genre \
+                        FROM actor_movie_avg_rating ac LEFT JOIN movies mo ON ac.movie_name = mo.movie_name and ac.year = mo.year \
+                        where actor_id={id} \
+                        ORDER BY average desc, year ASC, movie_name DESC LIMIT 1").format(id=sql.Literal(actor_id))
+        _, result = conn.execute(query)
+    except DatabaseException.ConnectionInvalid as e:
+        print(e)
+    except Exception as e:
+        print(e)
+    finally:
+        conn.close()
+        return CreateMovieFromResultSet(result)
 
 
 def stageCrewBudget(movieName: str, movieYear: int) -> int:
-    # TODO: implement
-    pass
+    conn = None
+    res = -1
+    try:
+        conn = Connector.DBConnector()
+        query = sql.SQL("SELECT q.budget - SUM(pl.salary) as diff\
+                        FROM (\
+                        SELECT s.movie_name, s.year , COALESCE (pr.budget, 0) as budget \
+                        from movies s LEFT JOIN produced pr ON s.movie_name = pr.movie_name AND s.year = pr.year \
+                        WHERE s.movie_name = {name} and s.year = {y} \
+                        )q LEFT JOIN playedin pl on q.movie_name = pl.movie_name AND q.year = pl.year\
+                        GROUP BY q.movie_name, q.year, q.budget").format(name=sql.Literal(movieName), y=sql.Literal(movieYear))
+        _, result = conn.execute(query)
+        if len(result.rows) > 0:
+            res = result.rows[0][0]
+    except DatabaseException.ConnectionInvalid as e:
+        print(e)
+    except Exception as e:
+        print(e)
+    finally:
+        conn.close()
+        return res
 
 
 def overlyInvestedInMovie(movie_name: str, movie_year: int, actor_id: int) -> bool:
-    # TODO: implement
-    pass
-
+    conn = None
+    res = False
+    try:
+        conn = Connector.DBConnector()
+        query = sql.SQL("SELECT * \
+        FROM(\
+        SELECT (num_roles::FLOAT)/total as res\
+        FROM (\
+        SELECT movie_name, year, SUM(num_roles) as total\
+        from playedin\
+        WHERE movie_name = {name} and year = {y}\
+        GROUP BY movie_name, year\
+        ) aa join (\
+        SELECT movie_name, year, actor_id, num_roles\
+        FROM playedin\
+        WHERE movie_name = {name} and year = {y} AND actor_id = {id}\
+        ) bb on aa.movie_name = bb.movie_name And aa.year = bb.year\
+        ) as q\
+        WHERE res >= 0.5").format(name=sql.Literal(movie_name), y=sql.Literal(movie_year), id=sql.Literal(actor_id))
+        _, result = conn.execute(query)
+        if len(result.rows) > 0:
+            res = True
+    except DatabaseException.ConnectionInvalid as e:
+        print(e)
+    except Exception as e:
+        print(e)
+    finally:
+        conn.close()
+        return res
 
 # ---------------------------------- ADVANCED API: ----------------------------------
 

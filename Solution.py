@@ -141,7 +141,6 @@ def clearTables():
 
 
 def dropTables():
-    # TODO: just did it to check git - need to check if this is correct
     conn = None
     try:
         conn = Connector.DBConnector()
@@ -165,8 +164,8 @@ def addCritic(critic: Critic) -> ReturnValue:
     conn = None
     res = ReturnValue.OK
     try:
-        critic_id = Critic.getCriticID()
-        critic_name = Critic.getName()
+        critic_id = critic.getCriticID()
+        critic_name = critic.getName()
         conn = Connector.DBConnector()
         query = sql.SQL("INSERT INTO Critics(critic_id, critic_name) VALUES({id}, {name})").format(id=sql.Literal(critic_id), name=sql.Literal(critic_name))
         conn.execute(query)
@@ -195,7 +194,7 @@ def deleteCritic(critic_id: int) -> ReturnValue:
     res = ReturnValue.OK
     try:
         conn = Connector.DBConnector()
-        query = sql.SQL("DELETE FROM Critics WHERE id={id}").format(id=sql.Literal(critic_id))
+        query = sql.SQL("DELETE FROM Critics WHERE critic_id={id}").format(id=sql.Literal(critic_id))
         rows_effected, _ = conn.execute(query)
         if rows_effected == 0:
             res = ReturnValue.NOT_EXISTS
@@ -224,6 +223,7 @@ def getCriticProfile(critic_id: int) -> Critic:
     finally:
         conn.close()
         return CreateCriticFromResultSet(result)
+
 
 def addActor(actor: Actor) -> ReturnValue:
     # TODO: implement

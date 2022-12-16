@@ -226,48 +226,206 @@ def getCriticProfile(critic_id: int) -> Critic:
 
 
 def addActor(actor: Actor) -> ReturnValue:
-    # TODO: implement
-    pass
+    conn = None
+    res = ReturnValue.OK
+    try:
+        actor_id = actor.getActorID()
+        actor_name = actor.getActorName()
+        age = actor.getAge()
+        height = actor.getHeight()
+        conn = Connector.DBConnector()
+        query = sql.SQL("INSERT INTO Actors(actor_id, actor_name, age, height) VALUES({id}, {name}, {a}, {h})").format(
+            id=sql.Literal(actor_id), name=sql.Literal(actor_name), a=sql.Literal(age), h=sql.Literal(height))
+        conn.execute(query)
+    except DatabaseException.NOT_NULL_VIOLATION as e:
+        print(e)
+        res = ReturnValue.BAD_PARAMS
+    except DatabaseException.CHECK_VIOLATION as e:
+        print(e)
+        res = ReturnValue.BAD_PARAMS
+    except DatabaseException.UNIQUE_VIOLATION as e:
+        print(e)
+        res = ReturnValue.ALREADY_EXISTS
+    except DatabaseException.ConnectionInvalid as e:
+        print(e)
+        res = ReturnValue.ERROR
+    except Exception as e:
+        res = ReturnValue.ERROR
+        print(e)
+    finally:
+        conn.close()
+        return res
 
 
 def deleteActor(actor_id: int) -> ReturnValue:
-    # TODO: implement
-    pass
+    conn = None
+    res = ReturnValue.OK
+    try:
+        conn = Connector.DBConnector()
+        query = sql.SQL("DELETE FROM Actors WHERE actor_id={id}").format(id=sql.Literal(actor_id))
+        rows_effected, _ = conn.execute(query)
+        if rows_effected == 0:
+            res = ReturnValue.NOT_EXISTS
+    except DatabaseException.ConnectionInvalid as e:
+        print(e)
+        res = ReturnValue.ERROR
+    except Exception as e:
+        res = ReturnValue.ERROR
+        print(e)
+    finally:
+        conn.close()
+        return res
 
 
 def getActorProfile(actor_id: int) -> Actor:
-    # TODO: implement
-    pass
+    conn = None
+    res = ReturnValue.OK
+    rows_effected, result = 0, ResultSet()
+    try:
+        conn = Connector.DBConnector()
+        rows_effected, result = conn.execute("SELECT * FROM Actors WHERE actor_id={id}").format(
+            id=sql.Literal(actor_id))
+    except DatabaseException.ConnectionInvalid as e:
+        print(e)
+    except Exception as e:
+        print(e)
+    finally:
+        conn.close()
+        return CreateActorFromResultSet(result)
 
 
 def addMovie(movie: Movie) -> ReturnValue:
-    # TODO: implement
-    pass
+    conn = None
+    res = ReturnValue.OK
+    try:
+        movie_name = movie.setMovieName()
+        year = movie.getYear()
+        genre = movie.getGenre()
+        conn = Connector.DBConnector()
+        query = sql.SQL("INSERT INTO Movies(movie_name, year, genre) VALUES({name}, {y}, {g})").format(name=sql.Literal(movie_name), y=sql.Literal(year), g=sql.Literal(genre))
+        conn.execute(query)
+    except DatabaseException.NOT_NULL_VIOLATION as e:
+        print(e)
+        res = ReturnValue.BAD_PARAMS
+    except DatabaseException.CHECK_VIOLATION as e:
+        print(e)
+        res = ReturnValue.BAD_PARAMS
+    except DatabaseException.UNIQUE_VIOLATION as e:
+        print(e)
+        res = ReturnValue.ALREADY_EXISTS
+    except DatabaseException.ConnectionInvalid as e:
+        print(e)
+        res = ReturnValue.ERROR
+    except Exception as e:
+        res = ReturnValue.ERROR
+        print(e)
+    finally:
+        conn.close()
+        return res
 
 
 def deleteMovie(movie_name: str, year: int) -> ReturnValue:
-    # TODO: implement
-    pass
+    conn = None
+    res = ReturnValue.OK
+    try:
+        conn = Connector.DBConnector()
+        query = sql.SQL("DELETE FROM Movies WHERE movie_name={name} AND year={y}").format(name=sql.Literal(movie_name), y=sql.Literal(year))
+        rows_effected, _ = conn.execute(query)
+        if rows_effected == 0:
+            res = ReturnValue.NOT_EXISTS
+    except DatabaseException.ConnectionInvalid as e:
+        print(e)
+        res = ReturnValue.ERROR
+    except Exception as e:
+        res = ReturnValue.ERROR
+        print(e)
+    finally:
+        conn.close()
+        return res
 
 
 def getMovieProfile(movie_name: str, year: int) -> Movie:
-    # TODO: implement
-    pass
+    conn = None
+    res = ReturnValue.OK
+    rows_effected, result = 0, ResultSet()
+    try:
+        conn = Connector.DBConnector()
+        rows_effected, result = conn.execute("SELECT * FROM Movies WHERE novie_name={name} AND year={y}").format(
+            name=sql.Literal(movie_name), y=sql.Literal(year))
+    except DatabaseException.ConnectionInvalid as e:
+        print(e)
+    except Exception as e:
+        print(e)
+    finally:
+        conn.close()
+        return CreateMovieFromResultSet(result)
 
 
 def addStudio(studio: Studio) -> ReturnValue:
-    # TODO: implement
-    pass
+    conn = None
+    res = ReturnValue.OK
+    try:
+        studio_id = studio.getStudioID()
+        studio_name = studio.getStudioName()
+        conn = Connector.DBConnector()
+        query = sql.SQL("INSERT INTO Studio(studio_id, studio_name) VALUES({id}, {name})").format(
+            id=sql.Literal(studio_id), name=sql.Literal(studio_name))
+        conn.execute(query)
+    except DatabaseException.NOT_NULL_VIOLATION as e:
+        print(e)
+        res = ReturnValue.BAD_PARAMS
+    except DatabaseException.CHECK_VIOLATION as e:
+        print(e)
+        res = ReturnValue.BAD_PARAMS
+    except DatabaseException.UNIQUE_VIOLATION as e:
+        print(e)
+        res = ReturnValue.ALREADY_EXISTS
+    except DatabaseException.ConnectionInvalid as e:
+        print(e)
+        res = ReturnValue.ERROR
+    except Exception as e:
+        res = ReturnValue.ERROR
+        print(e)
+    finally:
+        conn.close()
+        return res
 
 
 def deleteStudio(studio_id: int) -> ReturnValue:
-    # TODO: implement
-    pass
+    conn = None
+    res = ReturnValue.OK
+    try:
+        conn = Connector.DBConnector()
+        query = sql.SQL("DELETE FROM Studios WHERE studio_id={id}").format(id=sql.Literal(studio_id))
+        rows_effected, _ = conn.execute(query)
+        if rows_effected == 0:
+            res = ReturnValue.NOT_EXISTS
+    except DatabaseException.ConnectionInvalid as e:
+        print(e)
+        res = ReturnValue.ERROR
+    except Exception as e:
+        res = ReturnValue.ERROR
+        print(e)
+    finally:
+        conn.close()
+        return res
 
 
 def getStudioProfile(studio_id: int) -> Studio:
-    # TODO: implement
-    pass
+    conn = None
+    res = ReturnValue.OK
+    rows_effected, result = 0, ResultSet()
+    try:
+        conn = Connector.DBConnector()
+        rows_effected, result = conn.execute("SELECT * FROM Studios WHERE studio_id={id}").format(
+            id=sql.Literal(studio_id))
+    except DatabaseException.ConnectionInvalid as e:
+        print(e)
+    except Exception as e:
+        print(e)
+    finally:
+        conn.close()
+        return CreateStudioFromResultSet(result)
 
 # -----------------------------------------Basic API--------------------------------------------------------
 def criticRatedMovie(movieName: str, movieYear: int, criticID: int, rating: int) -> ReturnValue:

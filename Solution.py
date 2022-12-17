@@ -84,7 +84,7 @@ def createTables():
                     year INTEGER NOT NULL,\
                     actor_role TEXT NOT NULL,\
                     PRIMARY KEY (actor_id,movie_name,year,actor_role),\
-                    FOREIGN KEY (movie_name,year,actor_id) REFERENCES PlayedIn ON DELETE CASCADE\
+                    FOREIGN KEY (actor_id,movie_name,year) REFERENCES PlayedIn ON DELETE CASCADE\
                     );\
                     CREATE TABLE Produced(movie_name TEXT NOT NULL,\
                     year INTEGER NOT NULL,\

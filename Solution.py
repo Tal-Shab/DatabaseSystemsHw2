@@ -741,6 +741,23 @@ def studioRevenueByYear() -> List[Tuple[str, int]]:
 
 def getFanCritics() -> List[Tuple[int, int]]:
     # TODO: implement
+    """
+    SELECT critic_id,q1.studio_id
+    from
+    (
+    SELECT r.critic_id, studio_id, COUNT(studio_id) as num_reviews
+    FROM rated r JOIN produced p
+    ON r.movie_name=p.movie_name AND r.year=p.year
+    GROUP BY r.critic_id,p.studio_id
+    ) AS q1
+    JOIN
+    (
+    SELECT studio_id, COUNT(studio_id) as num_movies
+    FROM produced p
+    GROUP BY p.studio_id
+    ) as q2
+    on q1.studio_id = q2.studio_id AND q1.num_reviews = q2.num_movies
+    """
     pass
 
 

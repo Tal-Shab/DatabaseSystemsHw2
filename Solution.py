@@ -746,6 +746,32 @@ def getFanCritics() -> List[Tuple[int, int]]:
 
 def averageAgeByGenre() -> List[Tuple[str, float]]:
     # TODO: implement
+    """
+    SELECT genre, AVG(age)
+    FROM
+    (
+    SELECT DISTINCT genre, age, actor_id
+    FROM
+    (
+    SELECT q1.actor_id, q1.movie_name, q1.year, q2.age
+    FROM
+    (
+        (
+        SELECT actor_id, movie_name, year
+        FROM playedin
+        ) as q1
+    JOIN
+        (
+        SELECT age, actor_id
+        FROM actors
+        ) as q2
+    ON q1.actor_id=q2.actor_id)
+    ) as q3
+    JOIN movies m
+    ON q3.movie_name=m.movie_name AND q3.year=m.year
+    ) as q4
+    GROUP BY genre
+    """
     pass
 
 

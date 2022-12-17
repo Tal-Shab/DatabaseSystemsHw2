@@ -708,6 +708,23 @@ def overlyInvestedInMovie(movie_name: str, movie_year: int, actor_id: int) -> bo
 
 def franchiseRevenue() -> List[Tuple[str, int]]:
     # TODO: implement
+    """
+    SELECT
+    movie_name_from_movies as movie_name, COALESCE(total_rev, 0) as revenue
+    FROM
+    (
+        (SELECT DISTINCT movie_name as movie_name_from_movies from movies) A
+    LEFT JOIN
+    (SELECT movie_name, SUM(revenue) as total_rev
+    FROM
+    produced
+    GROUP
+    by
+    movie_name) B
+    ON
+    A.movie_name_from_movies = B.movie_name
+    )
+    """
     pass
 
 

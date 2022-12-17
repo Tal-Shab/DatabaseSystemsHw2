@@ -730,6 +730,12 @@ def franchiseRevenue() -> List[Tuple[str, int]]:
 
 def studioRevenueByYear() -> List[Tuple[str, int]]:
     # TODO: implement
+    """
+    SELECT studio_id, year, SUM(revenue)
+    FROM produced
+    GROUP BY studio_id, year
+    ORDER BY studio_id DESC, year DESC
+    """
     pass
 
 

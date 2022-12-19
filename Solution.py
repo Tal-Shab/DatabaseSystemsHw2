@@ -91,7 +91,7 @@ def createTables():
                     studio_id INTEGER NOT NULL,\
                     budget INTEGER NOT NULL CHECK(budget>0),\
                     revenue INTEGER NOT NULL CHECK(revenue>0),\
-                    PRIMARY KEY(movie_name,year,studio_id),\
+                    PRIMARY KEY(movie_name,year),\
                     FOREIGN KEY(movie_name,year) REFERENCES Movies ON DELETE CASCADE,\
                     FOREIGN KEY(studio_id) REFERENCES Studios ON DELETE CASCADE\
                     );\
@@ -112,6 +112,10 @@ def createTables():
                     CREATE VIEW actor_movie_AVG_rating AS\
                     SELECT DISTINCT actor_id, p.movie_name, p.year, COALESCE(average,0) as average\
                     FROM PlayedIn p LEFT JOIN movie_AVG_rating r ON p.movie_name=r.movie_name and p.year=r.year\
+                    ;\
+                    CREATE VIEW actor_movie_studio AS\
+                    SELECT Distinct actor_id, pl.movie_name, pl.year, pr.studio_id\
+                    from playedin pl JOIN produced pr On pl.movie_name=pr.movie_name AND pl.year=pr.year\
                     ")
     except DatabaseException.ConnectionInvalid as e:
         print(e)
@@ -707,93 +711,126 @@ def overlyInvestedInMovie(movie_name: str, movie_year: int, actor_id: int) -> bo
 
 
 def franchiseRevenue() -> List[Tuple[str, int]]:
-    # TODO: implement
-    """
-    SELECT
-    movie_name_from_movies as movie_name, COALESCE(total_rev, 0) as revenue
-    FROM
-    (
-        (SELECT DISTINCT movie_name as movie_name_from_movies from movies) A
-    LEFT JOIN
-    (SELECT movie_name, SUM(revenue) as total_rev
-    FROM
-    produced
-    GROUP
-    by
-    movie_name) B
-    ON
-    A.movie_name_from_movies = B.movie_name
-    )
-    """
-    pass
+    conn = None
+    try:
+        conn = Connector.DBConnector()
+        query = sql.SQL("SELECT movie_name_from_movies as movie_name, COALESCE(total_rev, 0) as revenue\
+                        FROM (\
+                        (SELECT DISTINCT movie_name as movie_name_from_movies from movies) A\
+                        LEFT JOIN\
+                        (SELECT movie_name, SUM(revenue) as total_rev\
+                        FROM produced\
+                        GROUP by movie_name) B\
+                        ON A.movie_name_from_movies = B.movie_name\
+                        )\
+                        ORDER BY movie_name DESC")
+        _, result = conn.execute(query)
+    except DatabaseException.ConnectionInvalid as e:
+        print(e)
+    except Exception as e:
+        print(e)
+    finally:
+        conn.close()
+        return result.rows
 
-
-def studioRevenueByYear() -> List[Tuple[str, int]]:
-    # TODO: implement
-    """
-    SELECT studio_id, year, SUM(revenue)
-    FROM produced
-    GROUP BY studio_id, year
-    ORDER BY studio_id DESC, year DESC
-    """
-    pass
+def studioRevenueByYear() -> List[Tuple[int, int, int]]:
+    conn = None
+    try:
+        conn = Connector.DBConnector()
+        query = sql.SQL("SELECT studio_id, year, SUM(revenue) AS total_revenue\
+                        FROM produced\
+                        GROUP BY studio_id, year\
+                        ORDER BY studio_id DESC, year DESC")
+        _, result = conn.execute(query)
+    except DatabaseException.ConnectionInvalid as e:
+        print(e)
+    except Exception as e:
+        print(e)
+    finally:
+        conn.close()
+        return result.rows
 
 
 def getFanCritics() -> List[Tuple[int, int]]:
-    # TODO: implement
-    """
-    SELECT critic_id,q1.studio_id
-    from
-    (
-    SELECT r.critic_id, studio_id, COUNT(studio_id) as num_reviews
-    FROM rated r JOIN produced p
-    ON r.movie_name=p.movie_name AND r.year=p.year
-    GROUP BY r.critic_id,p.studio_id
-    ) AS q1
-    JOIN
-    (
-    SELECT studio_id, COUNT(studio_id) as num_movies
-    FROM produced p
-    GROUP BY p.studio_id
-    ) as q2
-    on q1.studio_id = q2.studio_id AND q1.num_reviews = q2.num_movies
-    """
-    pass
+    conn = None
+    try:
+        conn = Connector.DBConnector()
+        query = sql.SQL("SELECT critic_id,q1.studio_id\
+                        from (\
+                        SELECT r.critic_id, studio_id, COUNT(studio_id) as num_reviews\
+                        FROM rated r JOIN produced p\
+                        ON r.movie_name=p.movie_name AND r.year=p.year\
+                        GROUP BY r.critic_id,p.studio_id\
+                        ) AS q1 JOIN (\
+                        SELECT studio_id, COUNT(studio_id) as num_movies\
+                        FROM produced p\
+                        GROUP BY p.studio_id\
+                        ) as q2\
+                        on q1.studio_id = q2.studio_id AND q1.num_reviews = q2.num_movies\
+                        Order BY critic_id DESC, studio_id DESC")
+        _, result = conn.execute(query)
+    except DatabaseException.ConnectionInvalid as e:
+        print(e)
+    except Exception as e:
+        print(e)
+    finally:
+        conn.close()
+        return result.rows
 
 
 def averageAgeByGenre() -> List[Tuple[str, float]]:
-    # TODO: implement
-    """
-    SELECT genre, AVG(age)
-    FROM
-    (
-    SELECT DISTINCT genre, age, actor_id
-    FROM
-    (
-    SELECT q1.actor_id, q1.movie_name, q1.year, q2.age
-    FROM
-    (
-        (
-        SELECT actor_id, movie_name, year
-        FROM playedin
-        ) as q1
-    JOIN
-        (
-        SELECT age, actor_id
-        FROM actors
-        ) as q2
-    ON q1.actor_id=q2.actor_id)
-    ) as q3
-    JOIN movies m
-    ON q3.movie_name=m.movie_name AND q3.year=m.year
-    ) as q4
-    GROUP BY genre
-    """
-    pass
+    conn = None
+    try:
+        conn = Connector.DBConnector()
+        query = sql.SQL("SELECT genre, AVG(age)\
+                        FROM (\
+                        SELECT DISTINCT genre, age, actor_id\
+                        FROM (\
+                        SELECT q1.actor_id, q1.movie_name, q1.year, q2.age\
+                        FROM (\
+                            (\
+                            SELECT actor_id, movie_name, year\
+                            FROM playedin\
+                            ) as q1\
+                        JOIN\
+                            (\
+                            SELECT age, actor_id\
+                            FROM actors\
+                            ) as q2 ON q1.actor_id=q2.actor_id)\
+                        ) as q3 JOIN movies m\
+                        ON q3.movie_name=m.movie_name AND q3.year=m.year\
+                        ) as q4\
+                        GROUP BY genre\
+                        ORDER BY genre ASC")
+        _, result = conn.execute(query)
+    except DatabaseException.ConnectionInvalid as e:
+        print(e)
+    except Exception as e:
+        print(e)
+    finally:
+        conn.close()
+        return result.rows
 
 
 def getExclusiveActors() -> List[Tuple[int, int]]:
-    # TODO: implement
-    pass
+    conn = None
+    try:
+        conn = Connector.DBConnector()
+        query = sql.SQL("SELECT q.actor_id, a.studio_id\
+                        From (\
+                            SELECT actor_id, COUNT(DISTINCT studio_id) AS num_studios\
+                            From actor_movie_studio\
+                            GROUP By actor_id\
+                        ) AS q Join actor_movie_studio a ON q.actor_id=a.actor_id\
+                        Where num_studios = 1\
+                        ORDER BY q.actor_id DESC")
+        _, result = conn.execute(query)
+    except DatabaseException.ConnectionInvalid as e:
+        print(e)
+    except Exception as e:
+        print(e)
+    finally:
+        conn.close()
+        return result.rows
 
 # GOOD LUCK!

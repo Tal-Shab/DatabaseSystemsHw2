@@ -52,25 +52,23 @@ def createTables():
     conn = None
     try:
         conn = Connector.DBConnector()
-        conn.execute("---------------basic tables----------------- \
-                    CREATE TABLE Actors(actor_id INTEGER PRIMARY KEY CHECK (actor_id>0),\
+        conn.execute("CREATE TABLE IF NOT EXISTS Actors(actor_id INTEGER PRIMARY KEY CHECK (actor_id>0),\
                     actor_name TEXT NOT NULL,\
                     age INTEGER NOT NULL CHECK (age>0),\
                     height INTEGER NOT NULL CHECK (height>0)\
-                    );\
-                    CREATE TABLE Movies(movie_name TEXT NOT NULL,\
+                    )")
+        conn.execute("CREATE TABLE IF NOT EXISTS Movies(movie_name TEXT NOT NULL,\
                     year INTEGER NOT NULL CHECK(year>=1895),\
                     genre TEXT NOT NULL CHECK(genre in ('Drama','Action','Comedy','Horror')),\
                     PRIMARY KEY(movie_name,year)\
-                    );\
-                    CREATE TABLE Studios(studio_id INTEGER PRIMARY KEY CHECK (studio_id>0),\
+                    )")
+        conn.execute("CREATE TABLE Studios(studio_id INTEGER PRIMARY KEY CHECK (studio_id>0),\
                     studio_name TEXT NOT NULL\
-                    );\
-                    CREATE TABLE Critics(critic_id INTEGER PRIMARY KEY CHECK (critic_id>0),\
+                    )")
+        conn.execute("CREATE TABLE Critics(critic_id INTEGER PRIMARY KEY CHECK (critic_id>0),\
                     critic_name TEXT NOT NULL\
-                    );\
-                    ---------------relations---------------- \
-                    CREATE TABLE PlayedIn(actor_id INTEGER NOT NULL,\
+                    )")
+        conn.execute("CREATE TABLE PlayedIn(actor_id INTEGER NOT NULL,\
                     movie_name TEXT NOT NULL,\
                     year INTEGER NOT NULL,\
                     salary INTEGER NOT NULL CHECK (salary>0),\
@@ -78,15 +76,15 @@ def createTables():
                     PRIMARY KEY (actor_id,movie_name,year),\
                     FOREIGN KEY (movie_name,year) REFERENCES Movies ON DELETE CASCADE,\
                     FOREIGN KEY (actor_id) REFERENCES Actors ON DELETE CASCADE\
-                    );\
-                    CREATE TABLE PlayedInRole(actor_id INTEGER NOT NULL,\
+                    )")
+        conn.execute("CREATE TABLE PlayedInRole(actor_id INTEGER NOT NULL,\
                     movie_name TEXT NOT NULL,\
                     year INTEGER NOT NULL,\
                     actor_role TEXT NOT NULL,\
                     PRIMARY KEY (actor_id,movie_name,year,actor_role),\
                     FOREIGN KEY (actor_id,movie_name,year) REFERENCES PlayedIn ON DELETE CASCADE\
-                    );\
-                    CREATE TABLE Produced(movie_name TEXT NOT NULL,\
+                    )")
+        conn.execute("CREATE TABLE Produced(movie_name TEXT NOT NULL,\
                     year INTEGER NOT NULL,\
                     studio_id INTEGER NOT NULL,\
                     budget INTEGER NOT NULL CHECK(budget>0),\
@@ -94,29 +92,26 @@ def createTables():
                     PRIMARY KEY(movie_name,year),\
                     FOREIGN KEY(movie_name,year) REFERENCES Movies ON DELETE CASCADE,\
                     FOREIGN KEY(studio_id) REFERENCES Studios ON DELETE CASCADE\
-                    );\
-                    CREATE TABLE Rated(movie_name TEXT NOT NULL,\
+                    )")
+        conn.execute("CREATE TABLE Rated(movie_name TEXT NOT NULL,\
                     year INTEGER NOT NULL,\
                     critic_id INTEGER NOT NULL,\
                     rating INTEGER NOT NULL CHECK(rating>=1 AND rating<=5),\
                     PRIMARY KEY(movie_name,year,critic_id),\
                     FOREIGN KEY(movie_name,year) REFERENCES Movies ON DELETE CASCADE,\
                     FOREIGN KEY(critic_id) REFERENCES Critics ON DELETE CASCADE\
-                    ); \
-                    ---------------views---------------- \
-                    CREATE VIEW movie_AVG_rating AS\
+                    )")
+        conn.execute("CREATE VIEW movie_AVG_rating AS\
                     SELECT movie_name,year,AVG(rating) average\
                     FROM Rated\
-                    GROUP BY movie_name,year\
-                    ;\
-                    CREATE VIEW actor_movie_AVG_rating AS\
+                    GROUP BY movie_name,year")
+        conn.execute("CREATE VIEW actor_movie_AVG_rating AS\
                     SELECT DISTINCT actor_id, p.movie_name, p.year, COALESCE(average,0) as average\
-                    FROM PlayedIn p LEFT JOIN movie_AVG_rating r ON p.movie_name=r.movie_name and p.year=r.year\
-                    ;\
-                    CREATE VIEW actor_movie_studio AS\
+                    FROM PlayedIn p LEFT JOIN movie_AVG_rating r ON p.movie_name=r.movie_name and p.year=r.year")
+        conn.execute("CREATE VIEW actor_movie_studio AS\
                     SELECT Distinct actor_id, pl.movie_name, pl.year, pr.studio_id\
-                    from playedin pl JOIN produced pr On pl.movie_name=pr.movie_name AND pl.year=pr.year\
-                    ")
+                    from playedin pl JOIN produced pr On pl.movie_name=pr.movie_name AND pl.year=pr.year")
+
     except DatabaseException.ConnectionInvalid as e:
         print(e)
     except Exception as e:
@@ -130,11 +125,10 @@ def clearTables():
     conn = None
     try:
         conn = Connector.DBConnector()
-        conn.execute("DELETE FROM Actors;\
-                    DELETE FROM Movies;\
-                    DELETE FROM Critics;\
-                    DELETE FROM Studios;\
-                    ")
+        conn.execute("DELETE FROM Actors")
+        conn.execute("DELETE FROM Movies")
+        conn.execute("DELETE FROM Critics")
+        conn.execute("DELETE FROM Studios")
     except DatabaseException.ConnectionInvalid as e:
         print(e)
     except Exception as e:
@@ -148,15 +142,14 @@ def dropTables():
     conn = None
     try:
         conn = Connector.DBConnector()
-        conn.execute("DROP TABLE Actors CASCADE;\
-                    DROP TABLE Movies CASCADE;\
-                    DROP TABLE Critics CASCADE;\
-                    DROP TABLE Studios CASCADE;\
-                    DROP TABLE playedin CASCADE;\
-                    DROP TABLE playedinrole CASCADE;\
-                    DROP TABLE produced CASCADE;\
-                    DROP TABLE rated CASCADE;\
-                    ")
+        conn.execute("DROP TABLE Actors CASCADE")
+        conn.execute("DROP TABLE Movies CASCADE")
+        conn.execute("DROP TABLE Critics CASCADE")
+        conn.execute("DROP TABLE Studios CASCADE")
+        conn.execute("DROP TABLE playedin CASCADE")
+        conn.execute("DROP TABLE playedinrole CASCADE")
+        conn.execute("DROP TABLE produced CASCADE")
+        conn.execute("DROP TABLE rated CASCADE")
     except DatabaseException.ConnectionInvalid as e:
         print(e)
     finally:
@@ -302,7 +295,7 @@ def addMovie(movie: Movie) -> ReturnValue:
     conn = None
     res = ReturnValue.OK
     try:
-        movie_name = movie.setMovieName()
+        movie_name = movie.getMovieName()
         year = movie.getYear()
         genre = movie.getGenre()
         conn = Connector.DBConnector()
@@ -372,7 +365,7 @@ def addStudio(studio: Studio) -> ReturnValue:
         studio_id = studio.getStudioID()
         studio_name = studio.getStudioName()
         conn = Connector.DBConnector()
-        query = sql.SQL("INSERT INTO Studio(studio_id, studio_name) VALUES({id}, {name})").format(
+        query = sql.SQL("INSERT INTO Studios(studio_id, studio_name) VALUES({id}, {name})").format(
             id=sql.Literal(studio_id), name=sql.Literal(studio_name))
         conn.execute(query)
     except DatabaseException.NOT_NULL_VIOLATION as e:
@@ -488,20 +481,24 @@ def criticDidntRateMovie(movieName: str, movieYear: int, criticID: int) -> Retur
 def actorPlayedInMovie(movieName: str, movieYear: int, actorID: int, salary: int, roles: List[str]) -> ReturnValue:
     # TODO: if something goes wrong , suspect this!!!
     conn = None
+    first = False
     res = ReturnValue.OK
     num_roles = len(roles)
     try:
-        query = sql.SQL("INSERT INTO PlayedIn(actor_id,movie_name,year,salary,num_roles) Values({id},{name},{year},{s},{n_r});").format(id=sql.Literal(actorID), name=sql.Literal(movieName), year=sql.Literal(movieYear), s=sql.Literal(salary), n_r=sql.Literal(num_roles))
-
-        query += sql.SQL("INSERT INTO PlayedInRole(actor_id,movie_name,year,actor_role) Values")
+        query = sql.SQL("INSERT INTO PlayedIn(actor_id,movie_name,year,salary,num_roles) Values({id},{name},{year},{s},{n_r})").format(id=sql.Literal(actorID), name=sql.Literal(movieName), year=sql.Literal(movieYear), s=sql.Literal(salary), n_r=sql.Literal(num_roles))
+        conn.execute(query)
+        first = True;
+        query = sql.SQL("INSERT INTO PlayedInRole(actor_id,movie_name,year,actor_role) Values")
         for i,r in enumerate(roles):
             query += sql.SQL("({id},{name},{year},{role})").format(id=sql.Literal(actorID), name=sql.Literal(movieName), year=sql.Literal(movieYear), role=sql.Literal(r))
             if i < num_roles-1:
                 query += sql.SQL(",")
-        query += sql.SQL(";")
         conn.execute(query)
     except DatabaseException.NOT_NULL_VIOLATION as e:
         print(e)
+        if first:
+            query = sql.SQL("DELETE FROM PlayedIn Where actor_id={id} AND movie_name={name} and year={y}").format(id=sql.Literal(actorID), name=sql.Literal(movieName), y=sql.Literal(movieYear))
+            conn.execute(query)
         res = ReturnValue.BAD_PARAMS
     except DatabaseException.CHECK_VIOLATION as e:
         print(e)

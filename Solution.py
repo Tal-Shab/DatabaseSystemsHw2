@@ -625,8 +625,8 @@ def averageRating(movieName: str, movieYear: int) -> float:
         conn = Connector.DBConnector()
         query = sql.SQL("SELECT average FROM movie_avg_rating where movie_name={name} And year={y}").format(
             name=sql.Literal(movieName), y=sql.Literal(movieYear))
-        _, result = conn.execute(query)
-        if result.rows[0][0] is not None:
+        rows, result = conn.execute(query)
+        if rows > 0:
             res = result.rows[0][0]
     except DatabaseException.ConnectionInvalid as e:
         print(e)

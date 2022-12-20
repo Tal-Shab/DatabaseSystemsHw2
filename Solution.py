@@ -683,14 +683,13 @@ def stageCrewBudget(movieName: str, movieYear: int) -> int:
     res = -1
     try:
         conn = Connector.DBConnector()
-        query = sql.SQL("SELECT q.budget - SUM(pl.salary) as diff\
+        query = sql.SQL("SELECT q.budget - SUM(COALESCE (pl.salary,0)) as diff\
                         FROM (\
                         SELECT s.movie_name, s.year , COALESCE (pr.budget, 0) as budget \
                         from movies s LEFT JOIN produced pr ON s.movie_name = pr.movie_name AND s.year = pr.year \
                         WHERE s.movie_name = {name} and s.year = {y} \
                         )q LEFT JOIN playedin pl on q.movie_name = pl.movie_name AND q.year = pl.year\
-                        GROUP BY q.movie_name, q.year, q.budget").format(name=sql.Literal(movieName),
-                                                                         y=sql.Literal(movieYear))
+                        GROUP BY q.movie_name, q.year, q.budget").format(name=sql.Literal(movieName), y=sql.Literal(movieYear))
         rows, result = conn.execute(query)
         if rows > 0:
             res = result.rows[0][0]

@@ -527,26 +527,6 @@ def actorPlayedInMovie(movieName: str, movieYear: int, actorID: int, salary: int
         return res
 
 
-def getActorsRoleInMovie(actor_id: int, movie_name: str, movieYear: int):
-    conn = None
-    result = ResultSet()
-    try:
-        conn = Connector.DBConnector()
-        query = sql.SQL("select actor_role\
-                        from playedinrole\
-                        where actor_id={id} AND movie_name={name} and year={y} \
-                        ORDER BY actor_role DESC").format(id=sql.Literal(actor_id), name=sql.Literal(movie_name),
-                                                          y=sql.Literal(movieYear))
-        _, result = conn.execute(query)
-    except DatabaseException.ConnectionInvalid as e:
-        print(e)
-    except Exception as e:
-        print(e)
-    finally:
-        conn.close()
-        return ConvertResultSetToList(result)
-
-
 def actorDidntPlayInMovie(movieName: str, movieYear: int, actorID: int) -> ReturnValue:
     conn = None
     res = ReturnValue.OK
@@ -566,6 +546,25 @@ def actorDidntPlayInMovie(movieName: str, movieYear: int, actorID: int) -> Retur
     finally:
         conn.close()
         return res
+
+def getActorsRoleInMovie(actor_id: int, movie_name: str, movieYear: int):
+    conn = None
+    result = ResultSet()
+    try:
+        conn = Connector.DBConnector()
+        query = sql.SQL("select actor_role\
+                        from playedinrole\
+                        where actor_id={id} AND movie_name={name} and year={y} \
+                        ORDER BY actor_role DESC").format(id=sql.Literal(actor_id), name=sql.Literal(movie_name),
+                                                          y=sql.Literal(movieYear))
+        _, result = conn.execute(query)
+    except DatabaseException.ConnectionInvalid as e:
+        print(e)
+    except Exception as e:
+        print(e)
+    finally:
+        conn.close()
+        return ConvertResultSetToList(result)
 
 
 def studioProducedMovie(studioID: int, movieName: str, movieYear: int, budget: int, revenue: int) -> ReturnValue:

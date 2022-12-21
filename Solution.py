@@ -47,6 +47,12 @@ def CreateStudioFromResultSet(result_set: ResultSet) -> Studio:
         new_studio.setStudioName(result_set.rows[0][1])
     return new_studio
 
+def ConvertResultSetToList(result_set: ResultSet) -> List:
+    res = []
+    if (result_set is not None) and (len(result_set.rows) != 0):
+        for i,r in enumerate(result_set.rows):
+            res.append(result_set.rows[i][0])
+    return res
 
 # ---------------------------------- CRUD API: ----------------------------------
 
@@ -539,7 +545,7 @@ def getActorsRoleInMovie(actor_id: int, movie_name: str, movieYear: int):
         print(e)
     finally:
         conn.close()
-        return result.rows
+        return ConvertResultSetToList(result)
 
 
 def actorDidntPlayInMovie(movieName: str, movieYear: int, actorID: int) -> ReturnValue:

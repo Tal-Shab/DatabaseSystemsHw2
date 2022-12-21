@@ -496,7 +496,6 @@ def actorPlayedInMovie(movieName: str, movieYear: int, actorID: int, salary: int
             "INSERT INTO PlayedIn(actor_id,movie_name,year,salary,num_roles) Values({id},{name},{year},{s},{n_r});").format(
             id=sql.Literal(actorID), name=sql.Literal(movieName), year=sql.Literal(movieYear), s=sql.Literal(salary),
             n_r=sql.Literal(num_roles))
-        first = True
         for i, r in enumerate(roles):
             if i == 0:
                 query += sql.SQL("INSERT INTO PlayedInRole(actor_id,movie_name,year,actor_role) Values")

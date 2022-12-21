@@ -505,23 +505,23 @@ def actorPlayedInMovie(movieName: str, movieYear: int, actorID: int, salary: int
                 query += sql.SQL(",")
         conn.execute(query)
     except DatabaseException.NOT_NULL_VIOLATION as e:
-        print(e)
+        #print(e)
         res = ReturnValue.BAD_PARAMS
     except DatabaseException.CHECK_VIOLATION as e:
-        print(e)
+        #print(e)
         res = ReturnValue.BAD_PARAMS
     except DatabaseException.FOREIGN_KEY_VIOLATION as e:
-        print(e)
+        #print(e)
         res = ReturnValue.NOT_EXISTS
     except DatabaseException.UNIQUE_VIOLATION as e:
-        print(e)
+        #print(e)
         res = ReturnValue.ALREADY_EXISTS
     except DatabaseException.ConnectionInvalid as e:
-        print(e)
+        #print(e)
         res = ReturnValue.ERROR
     except Exception as e:
+        #print(e)
         res = ReturnValue.ERROR
-        print(e)
     finally:
         conn.close()
         return res
@@ -538,11 +538,11 @@ def actorDidntPlayInMovie(movieName: str, movieYear: int, actorID: int) -> Retur
         if rows_effected == 0:
             res = ReturnValue.NOT_EXISTS
     except DatabaseException.ConnectionInvalid as e:
-        print(e)
+        #print(e)
         res = ReturnValue.ERROR
     except Exception as e:
+        #print(e)
         res = ReturnValue.ERROR
-        print(e)
     finally:
         conn.close()
         return res
@@ -578,23 +578,23 @@ def studioProducedMovie(studioID: int, movieName: str, movieYear: int, budget: i
             bud=sql.Literal(budget), rev=sql.Literal(revenue))
         conn.execute(query)
     except DatabaseException.CHECK_VIOLATION as e:
-        print(e)
+        #print(e)
         res = ReturnValue.BAD_PARAMS
     except DatabaseException.NOT_NULL_VIOLATION as e:
-        print(e)
+        #print(e)
         res = ReturnValue.BAD_PARAMS
     except DatabaseException.UNIQUE_VIOLATION as e:
-        print(e)
+        #print(e)
         res = ReturnValue.ALREADY_EXISTS
     except DatabaseException.FOREIGN_KEY_VIOLATION as e:
-        print(e)
+        #print(e)
         res = ReturnValue.NOT_EXISTS
     except DatabaseException.ConnectionInvalid as e:
-        print(e)
+        #print(e)
         res = ReturnValue.ERROR
     except Exception as e:
+        #print(e)
         res = ReturnValue.ERROR
-        print(e)
     finally:
         conn.close()
         return res
@@ -611,11 +611,11 @@ def studioDidntProduceMovie(studioID: int, movieName: str, movieYear: int) -> Re
         if rows_effected == 0:
             res = ReturnValue.NOT_EXISTS
     except DatabaseException.ConnectionInvalid as e:
-        print(e)
+        #print(e)
         res = ReturnValue.ERROR
     except Exception as e:
+        #print(e)
         res = ReturnValue.ERROR
-        print(e)
     finally:
         conn.close()
         return res

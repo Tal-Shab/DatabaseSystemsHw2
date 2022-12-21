@@ -662,7 +662,6 @@ def averageActorRating(actorID: int) -> float:
 
 
 def bestPerformance(actor_id: int) -> Movie:
-    # TODO: check what we shold return if the movies weren't rated
     conn = None
     result = ResultSet()
     try:

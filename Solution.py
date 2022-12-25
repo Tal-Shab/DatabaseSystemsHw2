@@ -790,6 +790,19 @@ def getFanCritics() -> List[Tuple[int, int]]:
     result = ResultSet()
     try:
         conn = Connector.DBConnector()
+        # NOTE - this query was not chosen because we believe the other one is more efficient (stated in the dry part)
+        # query = sql.SQL("SELECT  C.critic_id,S.studio_id \
+        #                         FROM critics C, studios S \
+        #                         WHERE EXISTS(SELECT * FROM rated ra WHERE C.critic_id = ra.critic_id) AND EXISTS(SELECT * FROM produced pa WHERE S.studio_id = pa.studio_id) AND not EXISTS( \
+        #                             SELECT p.movie_name, P.year \
+        #                             FROM produced P \
+        #                             WHERE P.studio_id = S.studio_id and ( \
+        #                                 (p.movie_name, p.year) NOT IN( \
+        #                                 SELECT r.movie_name, r.year \
+        #                                 FROM rated r \
+        #                                 WHERE r.critic_id = C.critic_id)) \
+        #                         ) \
+        #                         ORDER BY C.critic_id DESC, S.studio_id DESC")
         query = sql.SQL("SELECT critic_id,q1.studio_id\
                         from (\
                         SELECT r.critic_id, studio_id, COUNT(studio_id) as num_reviews\

@@ -486,7 +486,6 @@ def criticDidntRateMovie(movieName: str, movieYear: int, criticID: int) -> Retur
 
 
 def actorPlayedInMovie(movieName: str, movieYear: int, actorID: int, salary: int, roles: List[str]) -> ReturnValue:
-    # TODO: if something goes wrong , suspect this!!!
     conn = None
     res = ReturnValue.OK
     num_roles = len(roles)
@@ -627,7 +626,7 @@ def averageRating(movieName: str, movieYear: int) -> float:
     res = float(0)
     try:
         conn = Connector.DBConnector()
-        query = sql.SQL("SELECT average FROM movie_avg_rating where movie_name={name} And year={y}").format(
+        query = sql.SQL("SELECT (average)::FLOAT FROM movie_avg_rating where movie_name={name} And year={y}").format(
             name=sql.Literal(movieName), y=sql.Literal(movieYear))
         rows, result = conn.execute(query)
         if rows > 0:

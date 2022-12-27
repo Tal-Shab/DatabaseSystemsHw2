@@ -647,7 +647,7 @@ def averageActorRating(actorID: int) -> float:
     res = float(0)
     try:
         conn = Connector.DBConnector()
-        query = sql.SQL("SELECT COALESCE((AVG(average)::FLOAT),0) AS avg_rating FROM actor_movie_avg_rating where actor_id={id}").format(id=sql.Literal(actorID))
+        query = sql.SQL("SELECT (COALESCE(AVG(average),0))::FLOAT AS avg_rating FROM actor_movie_avg_rating where actor_id={id}").format(id=sql.Literal(actorID))
         rows_affected, result = conn.execute(query)
         if rows_affected > 0:
             res = result.rows[0][0]

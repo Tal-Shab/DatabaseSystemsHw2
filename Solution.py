@@ -95,8 +95,8 @@ def createTables():
         conn.execute("CREATE TABLE IF NOT EXISTS Produced(movie_name TEXT NOT NULL,\
                     year INTEGER NOT NULL,\
                     studio_id INTEGER NOT NULL,\
-                    budget INTEGER NOT NULL CHECK(budget>0),\
-                    revenue INTEGER NOT NULL CHECK(revenue>0),\
+                    budget INTEGER NOT NULL CHECK(budget>=0),\
+                    revenue INTEGER NOT NULL CHECK(revenue>=0),\
                     PRIMARY KEY(movie_name,year),\
                     FOREIGN KEY(movie_name,year) REFERENCES Movies ON DELETE CASCADE,\
                     FOREIGN KEY(studio_id) REFERENCES Studios ON DELETE CASCADE\
@@ -148,14 +148,14 @@ def dropTables():
     conn = None
     try:
         conn = Connector.DBConnector()
-        conn.execute("DROP TABLE Actors CASCADE")
-        conn.execute("DROP TABLE Movies CASCADE")
-        conn.execute("DROP TABLE Critics CASCADE")
-        conn.execute("DROP TABLE Studios CASCADE")
-        conn.execute("DROP TABLE playedin CASCADE")
-        conn.execute("DROP TABLE playedinrole CASCADE")
-        conn.execute("DROP TABLE produced CASCADE")
-        conn.execute("DROP TABLE rated CASCADE")
+        conn.execute("DROP TABLE IF EXISTS Actors CASCADE")
+        conn.execute("DROP TABLE IF EXISTS Movies CASCADE")
+        conn.execute("DROP TABLE IF EXISTS Critics CASCADE")
+        conn.execute("DROP TABLE IF EXISTS Studios CASCADE")
+        conn.execute("DROP TABLE IF EXISTS playedin CASCADE")
+        conn.execute("DROP TABLE IF EXISTS playedinrole CASCADE")
+        conn.execute("DROP TABLE IF EXISTS produced CASCADE")
+        conn.execute("DROP TABLE IF EXISTS rated CASCADE")
     except DatabaseException.ConnectionInvalid as e:
         print(e)
     finally:
@@ -647,10 +647,9 @@ def averageActorRating(actorID: int) -> float:
     res = float(0)
     try:
         conn = Connector.DBConnector()
-        query = sql.SQL("SELECT AVG(average) FROM actor_movie_avg_rating where actor_id={id}").format(
-            id=sql.Literal(actorID))
-        _, result = conn.execute(query)
-        if result.rows[0][0] is not None:
+        query = sql.SQL("SELECT COALESCE((AVG(average)::FLOAT),0) AS avg_rating FROM actor_movie_avg_rating where actor_id={id}").format(id=sql.Literal(actorID))
+        rows_affected, result = conn.execute(query)
+        if rows_affected > 0:
             res = result.rows[0][0]
     except DatabaseException.ConnectionInvalid as e:
         print(e)
@@ -831,7 +830,7 @@ def averageAgeByGenre() -> List[Tuple[str, float]]:
     result = ResultSet()
     try:
         conn = Connector.DBConnector()
-        query = sql.SQL("SELECT genre, AVG(age)\
+        query = sql.SQL("SELECT genre, (AVG(age)::FLOAT)\
                         FROM (\
                         SELECT DISTINCT genre, age, actor_id\
                         FROM (\

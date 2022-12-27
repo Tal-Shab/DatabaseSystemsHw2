@@ -13,17 +13,17 @@ from Business.Actor import Actor
 
 
 # ---------------------------------- auxiliary ----------------------------------
-def CreateCriticFromResultSet(result_set: ResultSet) -> Critic:
+def CreateCriticFromResultSet(result_set: ResultSet, rows_affected: int) -> Critic:
     new_critic = Critic.badCritic()
-    if (result_set is not None) and (len(result_set.rows) != 0):
+    if (result_set is not None) and (rows_affected > 0):
         new_critic.setCriticID(result_set.rows[0][0])
         new_critic.setName(result_set.rows[0][1])
     return new_critic
 
 
-def CreateActorFromResultSet(result_set: ResultSet) -> Actor:
+def CreateActorFromResultSet(result_set: ResultSet, rows_affected: int) -> Actor:
     new_actor = Actor.badActor()
-    if (result_set is not None) and (len(result_set.rows) != 0):
+    if (result_set is not None) and (rows_affected > 0):
         new_actor.setActorID(result_set.rows[0][0])
         new_actor.setActorName(result_set.rows[0][1])
         new_actor.setAge(result_set.rows[0][2])
@@ -31,25 +31,25 @@ def CreateActorFromResultSet(result_set: ResultSet) -> Actor:
     return new_actor
 
 
-def CreateMovieFromResultSet(result_set: ResultSet) -> Movie:
+def CreateMovieFromResultSet(result_set: ResultSet, rows_affected: int) -> Movie:
     new_movie = Movie.badMovie()
-    if (result_set is not None) and (len(result_set.rows) != 0):
+    if (result_set is not None) and (rows_affected > 0):
         new_movie.setMovieName(result_set.rows[0][0])
         new_movie.setYear(result_set.rows[0][1])
         new_movie.setGenre(result_set.rows[0][2])
     return new_movie
 
 
-def CreateStudioFromResultSet(result_set: ResultSet) -> Studio:
+def CreateStudioFromResultSet(result_set: ResultSet, rows_affected: int) -> Studio:
     new_studio = Studio.badStudio()
-    if (result_set is not None) and (len(result_set.rows) != 0):
+    if (result_set is not None) and (rows_affected > 0):
         new_studio.setStudioID(result_set.rows[0][0])
         new_studio.setStudioName(result_set.rows[0][1])
     return new_studio
 
-def ConvertResultSetToList(result_set: ResultSet) -> List:
+def ConvertResultSetToList(result_set: ResultSet, rows_affected: int) -> List:
     res = []
-    if (result_set is not None) and (len(result_set.rows) != 0):
+    if (result_set is not None) and (rows_affected > 0):
         for i,r in enumerate(result_set.rows):
             res.append(result_set.rows[i][0])
     return res
@@ -215,6 +215,7 @@ def deleteCritic(critic_id: int) -> ReturnValue:
 def getCriticProfile(critic_id: int) -> Critic:
     conn = None
     result = ResultSet()
+    rows_in_output = 0
     try:
         conn = Connector.DBConnector()
         query = sql.SQL("SELECT * FROM Critics WHERE critic_id={id}").format(id=sql.Literal(critic_id))
@@ -225,7 +226,7 @@ def getCriticProfile(critic_id: int) -> Critic:
         print(e)
     finally:
         conn.close()
-        return CreateCriticFromResultSet(result)
+        return CreateCriticFromResultSet(result, rows_in_output)
 
 
 def addActor(actor: Actor) -> ReturnValue:
@@ -283,17 +284,18 @@ def deleteActor(actor_id: int) -> ReturnValue:
 def getActorProfile(actor_id: int) -> Actor:
     conn = None
     result = ResultSet()
+    rows_in_output = 0
     try:
         conn = Connector.DBConnector()
         query = sql.SQL("SELECT * FROM Actors WHERE actor_id={id}").format(id=sql.Literal(actor_id))
-        _, result = conn.execute(query)
+        rows_in_output, result = conn.execute(query)
     except DatabaseException.ConnectionInvalid as e:
         print(e)
     except Exception as e:
         print(e)
     finally:
         conn.close()
-        return CreateActorFromResultSet(result)
+        return CreateActorFromResultSet(result, rows_in_output)
 
 
 def addMovie(movie: Movie) -> ReturnValue:
@@ -351,18 +353,19 @@ def deleteMovie(movie_name: str, year: int) -> ReturnValue:
 def getMovieProfile(movie_name: str, year: int) -> Movie:
     conn = None
     result = ResultSet()
+    rows_in_output = 0
     try:
         conn = Connector.DBConnector()
         query = sql.SQL("SELECT * FROM Movies WHERE movie_name={name} AND year={y}").format(
             name=sql.Literal(movie_name), y=sql.Literal(year))
-        _, result = conn.execute(query)
+        rows_in_output, result = conn.execute(query)
     except DatabaseException.ConnectionInvalid as e:
         print(e)
     except Exception as e:
         print(e)
     finally:
         conn.close()
-        return CreateMovieFromResultSet(result)
+        return CreateMovieFromResultSet(result, rows_in_output)
 
 
 def addStudio(studio: Studio) -> ReturnValue:
@@ -418,17 +421,18 @@ def deleteStudio(studio_id: int) -> ReturnValue:
 def getStudioProfile(studio_id: int) -> Studio:
     conn = None
     result = ResultSet()
+    rows_in_output = 0
     try:
         conn = Connector.DBConnector()
         query = sql.SQL("SELECT * FROM Studios WHERE studio_id={id}").format(id=sql.Literal(studio_id))
-        _, result = conn.execute(query)
+        rows_in_output, result = conn.execute(query)
     except DatabaseException.ConnectionInvalid as e:
         print(e)
     except Exception as e:
         print(e)
     finally:
         conn.close()
-        return CreateStudioFromResultSet(result)
+        return CreateStudioFromResultSet(result,rows_in_output)
 
 
 # -----------------------------------------Basic API--------------------------------------------------------
@@ -549,6 +553,7 @@ def actorDidntPlayInMovie(movieName: str, movieYear: int, actorID: int) -> Retur
 def getActorsRoleInMovie(actor_id: int, movie_name: str, movieYear: int):
     conn = None
     result = ResultSet()
+    rows_in_output = 0
     try:
         conn = Connector.DBConnector()
         query = sql.SQL("select actor_role\
@@ -556,14 +561,14 @@ def getActorsRoleInMovie(actor_id: int, movie_name: str, movieYear: int):
                         where actor_id={id} AND movie_name={name} and year={y} \
                         ORDER BY actor_role DESC").format(id=sql.Literal(actor_id), name=sql.Literal(movie_name),
                                                           y=sql.Literal(movieYear))
-        _, result = conn.execute(query)
+        rows_in_output, result = conn.execute(query)
     except DatabaseException.ConnectionInvalid as e:
         print(e)
     except Exception as e:
         print(e)
     finally:
         conn.close()
-        return ConvertResultSetToList(result)
+        return ConvertResultSetToList(result, rows_in_output)
 
 
 def studioProducedMovie(studioID: int, movieName: str, movieYear: int, budget: int, revenue: int) -> ReturnValue:
@@ -662,20 +667,21 @@ def averageActorRating(actorID: int) -> float:
 def bestPerformance(actor_id: int) -> Movie:
     conn = None
     result = ResultSet()
+    rows_in_output = 0
     try:
         conn = Connector.DBConnector()
         query = sql.SQL("SELECT ac.movie_name, ac.year , mo.genre \
                         FROM actor_movie_avg_rating ac LEFT JOIN movies mo ON ac.movie_name = mo.movie_name and ac.year = mo.year \
                         where actor_id={id} \
                         ORDER BY average desc, year ASC, movie_name DESC LIMIT 1").format(id=sql.Literal(actor_id))
-        _, result = conn.execute(query)
+        rows_in_output, result = conn.execute(query)
     except DatabaseException.ConnectionInvalid as e:
         print(e)
     except Exception as e:
         print(e)
     finally:
         conn.close()
-        return CreateMovieFromResultSet(result)
+        return CreateMovieFromResultSet(result, rows_in_output)
 
 
 def stageCrewBudget(movieName: str, movieYear: int) -> int:
@@ -864,14 +870,21 @@ def getExclusiveActors() -> List[Tuple[int, int]]:
     result = ResultSet()
     try:
         conn = Connector.DBConnector()
-        query = sql.SQL("SELECT q.actor_id, a.studio_id\
-                        From (\
-                            SELECT actor_id, COUNT(DISTINCT studio_id) AS num_studios\
-                            From actor_movie_studio\
-                            GROUP By actor_id\
-                        ) AS q Join actor_movie_studio a ON q.actor_id=a.actor_id\
-                        Where num_studios = 1\
-                        ORDER BY q.actor_id DESC")
+        query = sql.SQL("SELECT DISTINCT q2.actor_id, a.studio_id \
+                        From ( \
+                          SELECT q1.actor_id, q1.num_studios \
+                          FROM ( \
+                            SELECT actor_id, COUNT(DISTINCT studio_id) AS num_studios \
+                            From actor_movie_studio \
+                            GROUP By actor_id \
+                            ) as q1 \
+                            Where num_studios = 1 \
+                            )AS q2 \
+                        Join ( \
+                          SELECT DISTINCT actor_id,studio_id \
+                          FROM actor_movie_studio \
+                        )AS a ON q2.actor_id=a.actor_id \
+                        ORDER BY q2.actor_id DESC")
         _, result = conn.execute(query)
     except DatabaseException.ConnectionInvalid as e:
         print(e)
